@@ -7,7 +7,7 @@ from discord.ext import commands
 
 from common import logger
 from lol_manager import LolManager
-from riot_data import AccountDTO, SummonerDTO, LeagueEntryDTO
+from riot_data import RiotAPIConfig, AccountDTO, SummonerDTO, LeagueEntryDTO
 
 
 class DiscordBot:
@@ -50,11 +50,17 @@ class DiscordBot:
         async def cmd_help(ctx):
             await ctx.send("Help message")
 
-        # !롤 소환사명#태그: 소환사의 기본정보를 확인합니다.
+        # !롤 <소환사명#태그>: 소환사의 기본정보를 확인합니다.
         @self.bot.command(name='롤')
         async def cmd_lol(ctx, *args):
             name, tag = args[0].split("#")
             await ctx.send(embed=self._get_lol_summoner_embed(name, tag))
+
+        # !롤챔피언 <챔피언명>`: 챔피언의 정보를 확인합니다.
+        @self.bot.command(name='롤챔피언')
+        async def cmd_lol_champion(ctx, *args):
+            champion_name = " ".join(args)
+            await ctx.send(embed=self._get_lol_champion_embed(champion_name))
 
     def _get_lol_summoner_embed(self, name: str, tag: str) -> discord.Embed:
         account_dto: AccountDTO = self.lol_manager.get_account_by_name_and_tag(name, tag)
@@ -78,11 +84,31 @@ class DiscordBot:
         embed.set_author(
             name=account_dto.riot_id,
             url=self.lol_manager.riot_conf.OPGG_SUMMONER_URL.format(name=name, tag=tag.upper()),
-            icon_url=self.lol_manager.riot_conf.PROFILE_ICON_URL.format(profileicon=summoner_dto.profile_icon_id)
+            icon_url=self.lol_manager.riot_conf.DDRAGON_PROFILE_ICON_URL.format(
+                version=RiotAPIConfig.get_latest_ddragon_version(),
+                profileicon=summoner_dto.profile_icon_id
+            )
         )
         embed.add_field(name="소환사 레벨", value=f"{summoner_dto.summoner_level} 레벨", inline=False)
         embed.add_field(name="리그 포인트", value=f"{league_entry.league_points} LP", inline=False)
         embed.add_field(name="승", value=league_entry.wins, inline=True)
         embed.add_field(name="패", value=league_entry.losses, inline=True)
         embed.add_field(name="승률", value=f"{league_entry.wins / (league_entry.wins + league_entry.losses) * 100:.2f}%", inline=True)
+        return embed
+
+    def _get_lol_champion_embed(self, champion_name: str) -> discord.Embed:
+        champion_dto = self.lol_manager.get_champion_by_name(champion_name)
+        embed = discord.Embed(
+            title=champion_dto.name,
+            description=champion_dto.title,
+            color=0x00ff00
+        )
+        embed.set_thumbnail(
+            url=self.lol_manager.riot_conf.DDRAGON_CHAMPION_IMG_URL.format(
+                version=RiotAPIConfig.get_latest_ddragon_version(),
+                champion=champion_dto.id  # ex: Aatrox
+            )
+        )
+        embed.add_field(name="챔피언 타입", value=champion_dto.tags, inline=False)
+        embed.add_field(name="챔피언 정보", value=champion_dto.blurb, inline=False)
         return embed

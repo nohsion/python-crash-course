@@ -3,7 +3,8 @@ import requests
 from dotenv import load_dotenv
 from typing import Set
 
-from riot_data import RiotAPIConfig, AccountDTO, SummonerDTO, LeagueEntryDTO, MiniSeriesDTO
+from riot_data import RiotAPIConfig, AccountDTO, SummonerDTO, LeagueEntryDTO, MiniSeriesDTO, ChampionDTO, \
+    ChampionInfoDTO, ChampionImageDTO, ChampionStatsDTO
 from common import logger
 
 
@@ -86,6 +87,80 @@ class LolManager:
                 ) if "miniSeries" in entry else None
             ) for entry in res_data
         }
+
+    def get_champion_by_name(self, champion_name: str) -> ChampionDTO:
+        champion_ko_url: str = self.riot_conf.DDRAGON_CHAMPION_URL.format(
+            version=RiotAPIConfig.get_latest_ddragon_version(),
+            country='ko_KR'
+        )
+        champion_ko_res = requests.get(champion_ko_url, headers={"X-Riot-Token": self.RIOT_API_KEY})
+        if champion_ko_res.status_code != 200:
+            logger.error("Error searching for champion")
+            raise Exception("Error searching for champion")
+        res_data: dict = champion_ko_res.json()
+        logger.info(f"API: Champion data={res_data}")
+
+        selected_champ: dict | None = None
+        for c_key, c_data in res_data['data'].items():
+            # 영어
+            if c_key.lower() == champion_name.lower():
+                selected_champ = c_data
+                break
+            # 한글
+            if c_data['name'] == champion_name:
+                selected_champ = c_data
+                break
+        if not selected_champ:
+            logger.error(f"There is no champion named {champion_name}")
+            raise Exception(f"There is no champion named {champion_name}")
+
+        return ChampionDTO(
+            id=selected_champ['id'],
+            key=selected_champ['key'],
+            name=selected_champ['name'],
+            title=selected_champ['title'],
+            blurb=selected_champ['blurb'],
+            info=ChampionInfoDTO(
+                attack=selected_champ['info']['attack'],
+                defense=selected_champ['info']['defense'],
+                magic=selected_champ['info']['magic'],
+                difficulty=selected_champ['info']['difficulty'],
+            ),
+            image=ChampionImageDTO(
+                full=selected_champ['image']['full'],
+                sprite=selected_champ['image']['sprite'],
+                group=selected_champ['image']['group'],
+                x=selected_champ['image']['x'],
+                y=selected_champ['image']['y'],
+                w=selected_champ['image']['w'],
+                h=selected_champ['image']['h'],
+
+            ),
+            tags=selected_champ['tags'],
+            partype=selected_champ['partype'],
+            stats=ChampionStatsDTO(
+                hp=selected_champ['stats']['hp'],
+                hpperlevel=selected_champ['stats']['hpperlevel'],
+                mp=selected_champ['stats']['mp'],
+                mpperlevel=selected_champ['stats']['mpperlevel'],
+                movespeed=selected_champ['stats']['movespeed'],
+                armor=selected_champ['stats']['armor'],
+                armorperlevel=selected_champ['stats']['armorperlevel'],
+                spellblock=selected_champ['stats']['spellblock'],
+                spellblockperlevel=selected_champ['stats']['spellblockperlevel'],
+                attackrange=selected_champ['stats']['attackrange'],
+                hpregen=selected_champ['stats']['hpregen'],
+                hpregenperlevel=selected_champ['stats']['hpregenperlevel'],
+                mpregen=selected_champ['stats']['mpregen'],
+                mpregenperlevel=selected_champ['stats']['mpregenperlevel'],
+                crit=selected_champ['stats']['crit'],
+                critperlevel=selected_champ['stats']['critperlevel'],
+                attackdamage=selected_champ['stats']['attackdamage'],
+                attackdamageperlevel=selected_champ['stats']['attackdamageperlevel'],
+                attackspeedperlevel=selected_champ['stats']['attackspeedperlevel'],
+                attackspeed=selected_champ['stats']['attackspeed'],
+            ),
+        )
 
     @staticmethod
     def find_league_entry_by_queue_type(
