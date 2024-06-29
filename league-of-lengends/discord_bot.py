@@ -7,7 +7,7 @@ from discord.ext import commands
 
 from common import logger
 from lol_manager import LolManager
-from riot_data import RiotAPIConfig, AccountDTO, SummonerDTO, LeagueEntryDTO
+from riot_data import RiotAPIConfig, AccountDTO, SummonerDTO, LeagueEntryDTO, ChampionDTO
 
 
 class DiscordBot:
@@ -56,8 +56,8 @@ class DiscordBot:
             name, tag = args[0].split("#")
             await ctx.send(embed=self._get_lol_summoner_embed(name, tag))
 
-        # !롤챔피언 <챔피언명>`: 챔피언의 정보를 확인합니다.
-        @self.bot.command(name='롤챔피언')
+        # !롤챔 <챔피언명>`: 챔피언의 정보를 확인합니다.
+        @self.bot.command(name='롤챔')
         async def cmd_lol_champion(ctx, *args):
             champion_name = " ".join(args)
             await ctx.send(embed=self._get_lol_champion_embed(champion_name))
@@ -97,18 +97,21 @@ class DiscordBot:
         return embed
 
     def _get_lol_champion_embed(self, champion_name: str) -> discord.Embed:
-        champion_dto = self.lol_manager.get_champion_by_name(champion_name)
+        champion_dto: ChampionDTO = self.lol_manager.get_champion_by_name(champion_name)
+        champion_info: dict = self.lol_manager.get_opgg_champion_build_by_id(champion_dto.id)
         embed = discord.Embed(
-            title=champion_dto.name,
-            description=champion_dto.title,
+            title=f"{champion_dto.name} ({champion_dto.title})",
+            description=f"빌드 - {champion_info.get('build')}",
             color=0x00ff00
         )
         embed.set_thumbnail(
             url=self.lol_manager.riot_conf.DDRAGON_CHAMPION_IMG_URL.format(
                 version=RiotAPIConfig.get_latest_ddragon_version(),
-                champion=champion_dto.id  # ex: Aatrox
+                champion_id=champion_dto.id  # 챔피언ID. ex) Aatrox
             )
         )
-        embed.add_field(name="챔피언 타입", value=champion_dto.tags, inline=False)
+        embed.add_field(name="티어", value=champion_info.get('tier'), inline=True)
+        embed.add_field(name="챔피언 타입", value=", ".join(champion_dto.tags), inline=False)
         embed.add_field(name="챔피언 정보", value=champion_dto.blurb, inline=False)
+
         return embed

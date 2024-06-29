@@ -1,5 +1,6 @@
 import os
 import requests
+from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from typing import Set
 
@@ -161,6 +162,31 @@ class LolManager:
                 attackspeed=selected_champ['stats']['attackspeed'],
             ),
         )
+
+    def get_opgg_champion_build_by_id(self, champion_id: str) -> dict:
+        opgg_headers = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.5112.79 Safari/537.36"}
+
+        opgg_champion_build_url: str = self.riot_conf.OPGG_CHAMPION_BUILD_URL.format(champion_id=champion_id)
+        opgg_champion_build_res = requests.get(opgg_champion_build_url, headers=opgg_headers)
+        if opgg_champion_build_res.status_code != 200:
+            logger.error(f"Error searching for op.gg champion build with champion id {champion_id}")
+            raise Exception(f"Error searching for op.gg champion build with champion id {champion_id}")
+        html = opgg_champion_build_res.text
+
+        soup = BeautifulSoup(html, 'html.parser')
+
+        # 티어
+        tier_element = soup.select_one('#content-header > div.css-5075o4.ecf11su0 > div.inner.inner--ads > div.inner-box > div.css-tlxswk.eufekzz0 > div.info-box > div.tier-info > span')
+        tier = tier_element.text if tier_element else None
+
+        # 빌드
+        build_element = soup.select_one('#content-header > div.css-5075o4.ecf11su0 > div.inner.inner--ads > div.inner-box > div.css-tlxswk.eufekzz0 > div.info-box > h1 > span')
+        build = build_element.text if build_element else None
+
+        return {
+            "tier": tier,
+            "build": build,
+        }
 
     @staticmethod
     def find_league_entry_by_queue_type(

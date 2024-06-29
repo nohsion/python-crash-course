@@ -5,7 +5,7 @@
 
 ## 명령어
 - `!롤 <소환사명#태그>`: 소환사의 전적을 확인합니다.
-- `!롤챔피언 <챔피언명>`: 챔피언의 정보를 확인합니다.
+- `!롤챔 <챔피언명>`: 챔피언의 정보를 확인합니다.
 
 ## Reference
 - [Riot Developer Portal](https://developer.riotgames.com/)

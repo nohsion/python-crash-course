@@ -9,7 +9,10 @@ class RiotAPIConfig:
     ACCOUNT_BY_RIOT_ID_URL: str
     SUMMONER_BY_UUID_URL: str
     LEAGUE_ENTRIES_BY_SUMMONER_ID_URL: str
+    # OP.GG URL
     OPGG_SUMMONER_URL: str
+    OPGG_CHAMPION_BUILD_URL: str
+    # Data Dragon URL
     DDRAGON_PROFILE_ICON_URL: str
     DDRAGON_CHAMPION_URL: str
     DDRAGON_CHAMPION_IMG_URL: str
@@ -23,6 +26,7 @@ class RiotAPIConfig:
             SUMMONER_BY_UUID_URL=config.get(section, "summonerByPUUID"),
             LEAGUE_ENTRIES_BY_SUMMONER_ID_URL=config.get(section, "leagueEntriesBySummonerId"),
             OPGG_SUMMONER_URL=config.get(section, "opggSummoner"),
+            OPGG_CHAMPION_BUILD_URL=config.get(section, "opggChampionBuild"),
             DDRAGON_PROFILE_ICON_URL=config.get(section, "dd_profileicon"),
             DDRAGON_CHAMPION_URL=config.get(section, "dd_champion"),
             DDRAGON_CHAMPION_IMG_URL=config.get(section, "dd_champion_img")
