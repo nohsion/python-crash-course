@@ -4,18 +4,22 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class RiotAPIConfig:
-    ACCOUNT_BY_RIOT_ID_BASEURL: str
-    SUMMONER_BY_UUID_BASEURL: str
-    LEAGUE_ENTRIES_BY_SUMMONER_ID_BASEURL: str
+    ACCOUNT_BY_RIOT_ID_URL: str
+    SUMMONER_BY_UUID_URL: str
+    LEAGUE_ENTRIES_BY_SUMMONER_ID_URL: str
+    PROFILE_ICON_URL: str
+    OPGG_SUMMONER_URL: str
 
     @classmethod
     def from_config(cls, config_path: str = "config.ini", section: str = "RiotAPI"):
         config = configparser.ConfigParser()
         config.read(config_path)
         return cls(
-            ACCOUNT_BY_RIOT_ID_BASEURL=config.get(section, "accountByRiotId"),
-            SUMMONER_BY_UUID_BASEURL=config.get(section, "summonerByPUUID"),
-            LEAGUE_ENTRIES_BY_SUMMONER_ID_BASEURL=config.get(section, "leagueEntriesBySummonerId"),
+            ACCOUNT_BY_RIOT_ID_URL=config.get(section, "accountByRiotId"),
+            SUMMONER_BY_UUID_URL=config.get(section, "summonerByPUUID"),
+            LEAGUE_ENTRIES_BY_SUMMONER_ID_URL=config.get(section, "leagueEntriesBySummonerId"),
+            PROFILE_ICON_URL=config.get(section, "profileicon"),
+            OPGG_SUMMONER_URL=config.get(section, "opggSummoner"),
         )
 
 
@@ -28,6 +32,10 @@ class AccountDTO:
     puuid: str
     game_name: str
     tag_line: str
+
+    @property
+    def riot_id(self) -> str:
+        return f"{self.game_name}#{self.tag_line}"
 
 
 @dataclass(frozen=True)
